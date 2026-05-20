@@ -1,8 +1,6 @@
 import io
 import os
-
 import pandas as pd
-
 
 class ArxivMetadataBuilder:
     def __init__(self, mapping_path: str, titleabs_path: str, output_path: str):

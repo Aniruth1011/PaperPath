@@ -26,7 +26,7 @@ import torch
 
 # ── Resolve final/ on sys.path ────────────────────────────────────────────────
 _FINAL_DIR = os.path.abspath(
-    os.environ.get("FINAL_DIR", os.path.join(os.path.dirname(__file__), "..", "final"))
+    os.environ.get("FINAL_DIR", os.path.join(os.path.dirname(__file__), ".."))
 )
 if _FINAL_DIR not in sys.path:
     sys.path.insert(0, _FINAL_DIR)

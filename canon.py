@@ -322,7 +322,6 @@ class QueryIntent:
 def parse_intent(query: str) -> QueryIntent:
     """
     Match the lowercased query against REGISTRY triggers (longest-match wins).
-    Falls back to a generic intent using query words as ad-hoc topic keywords.
     """
     q = query.lower().strip()
 

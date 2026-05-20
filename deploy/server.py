@@ -37,7 +37,9 @@ from pipeline_runner import PrereqPipeline
 def _env(key: str, default: str) -> str:
     return os.environ.get(key, default)
 
-_FINAL_DIR      = _env("FINAL_DIR",      "../final")
+_FINAL_DIR = os.environ.get("FINAL_DIR") or os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "..")
+)
 _SPECTER_PATH   = _env("SPECTER_PATH",   os.path.join(_FINAL_DIR, "outputs/embeddings/specter.npy"))
 _GNN_PATH       = _env("GNN_PATH",       os.path.join(_FINAL_DIR, "outputs/embeddings/gnn_embeddings.pt"))
 _METADATA_PATH  = _env("METADATA_PATH",  os.path.join(_FINAL_DIR, "outputs/metadata/papers.parquet"))
