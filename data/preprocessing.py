@@ -5,14 +5,6 @@ import pandas as pd
 
 
 class ArxivMetadataBuilder:
-    """
-    Alignment backbone: joins nodeidx2paperid.csv.gz with titleabs.tsv so
-    that row i of the output parquet corresponds exactly to graph node i.
-
-    titleabs.tsv uses MAG paper IDs (not OGB node indices) in column 0,
-    so a direct read without joining the mapping file gives wrong alignment.
-    """
-
     def __init__(self, mapping_path: str, titleabs_path: str, output_path: str):
         self.mapping_path = mapping_path
         self.titleabs_path = titleabs_path
