@@ -1,0 +1,41 @@
+version: "3.9"
+
+services:
+  prereqgraph:
+    build:
+      context: ..         # repo root — so both final/ and deploy/ are in build context
+      dockerfile: deploy/Dockerfile
+    image: prereqgraph:latest
+    container_name: prereqgraph
+    restart: unless-stopped
+    ports:
+      - "${PORT:-8000}:8000"
+    environment:
+      # Override any of these in a .env file next to docker-compose.yml
+      FINAL_DIR: /app/final
+      SPECTER_PATH: /app/final/outputs/embeddings/specter.npy
+      GNN_PATH: /app/final/outputs/embeddings/gnn_embeddings.pt
+      METADATA_PATH: /app/final/outputs/metadata/papers.parquet
+      DATASET_ROOT: /app/final/dataset
+      HOST: "0.0.0.0"
+      PORT: "8000"
+      CACHE_TTL: "${CACHE_TTL:-300}"
+      CACHE_MAX_SIZE: "${CACHE_MAX_SIZE:-50}"
+      METRICS_HISTORY: "${METRICS_HISTORY:-500}"
+    volumes:
+      # Mount pre-downloaded data so the container does not re-download at startup.
+      # Change the left-hand paths to wherever you store them on the host.
+      - ${DATASET_DIR:-../dataset}:/app/final/dataset:ro
+      - ${EMBEDDINGS_DIR:-../outputs/embeddings}:/app/final/outputs/embeddings:ro
+      - ${METADATA_DIR:-../outputs/metadata}:/app/final/outputs/metadata:ro
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8000/api/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 6
+      start_period: 120s   # pipeline load takes ~60-90 s on first start
+    # Memory limit — the full stack (SPECTER2 + GNN + graph) uses ~6-8 GB
+    deploy:
+      resources:
+        limits:
+          memory: 12g

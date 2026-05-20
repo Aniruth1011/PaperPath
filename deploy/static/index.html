@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>PreReqGraph — Prerequisite Curriculum</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+/* ── Design tokens ──────────────────────────────────────────────────────── */
+:root {
+  --bg:           #080c18;
+  --surface:      #0f1623;
+  --surface-2:    #161d2e;
+  --surface-3:    #1e2640;
+  --border:       #252e45;
+  --border-hi:    #313d5a;
+  --primary:      #6366f1;
+  --primary-d:    #4f46e5;
+  --primary-glow: rgba(99,102,241,.18);
+  --gold:         #f59e0b;
+  --gold-l:       #fde68a;
+  --teal:         #14b8a6;
+  --green:        #10b981;
+  --red:          #ef4444;
+  --amber:        #f97316;
+  --violet:       #a855f7;
+  --text:         #e2e8f8;
+  --text-d:       #94a3b8;
+  --text-m:       #64748b;
+  --mono:         'JetBrains Mono', monospace;
+  --sans:         'Inter', system-ui, sans-serif;
+  --r:            10px;
+  --r-lg:         16px;
+  --r-xl:         22px;
+  --sh:           0 4px 32px rgba(0,0,0,.45);
+  --sh-hi:        0 8px 48px rgba(0,0,0,.6);
+  --tr:           .18s ease;
+}
+/* ── Reset / base ─────────────────────────────────────────────────────────── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:100vh;line-height:1.6}
+a{color:var(--primary-d);text-decoration:none}
+button{cursor:pointer;font-family:inherit}
+input{font-family:inherit}
+
+/* ── Scrollbar ────────────────────────────────────────────────────────────── */
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:var(--surface)}
+::-webkit-scrollbar-thumb{background:var(--border-hi);border-radius:3px}
+
+/* ── Header ──────────────────────────────────────────────────────────────── */
+header{
+  position:sticky;top:0;z-index:100;
+  background:rgba(8,12,24,.88);
+  backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--border);
+  padding:0 24px;
+  display:flex;align-items:center;gap:20px;height:60px;
+}
+.logo{display:flex;align-items:center;gap:10px;font-weight:700;font-size:1.1rem;color:var(--text)}
+.logo svg{color:var(--primary)}
+.logo span em{color:var(--primary);font-style:normal}
+nav{display:flex;gap:4px;margin-left:auto}
+.nav-btn{
+  background:none;border:none;color:var(--text-d);font-size:.9rem;font-weight:500;
+  padding:6px 14px;border-radius:7px;transition:var(--tr);
+}
+.nav-btn:hover{background:var(--surface-2);color:var(--text)}
+.nav-btn.active{background:var(--primary-glow);color:var(--primary)}
+.status-dot{
+  width:8px;height:8px;border-radius:50%;background:var(--text-m);
+  animation:pulse-grey 2s infinite;margin-left:8px;
+}
+.status-dot.ready{background:var(--green);animation:pulse-green 3s infinite}
+.status-dot.loading{background:var(--amber);animation:pulse-amber 1s infinite}
+.status-dot.error{background:var(--red);animation:none}
+@keyframes pulse-grey{0%,100%{opacity:.5}50%{opacity:1}}
+@keyframes pulse-green{0%,100%{box-shadow:0 0 0 0 rgba(16,185,129,.4)}70%{box-shadow:0 0 0 6px rgba(16,185,129,0)}}
+@keyframes pulse-amber{0%,100%{opacity:.6}50%{opacity:1}}
+
+/* ── Tab sections ─────────────────────────────────────────────────────────── */
+.tab-content{display:none}
+.tab-content.active{display:block}
+
+/* ── Hero / search ───────────────────────────────────────────────────────── */
+.hero{
+  padding:52px 24px 36px;
+  background:
+    radial-gradient(ellipse 70% 50% at 50% -10%, rgba(99,102,241,.18) 0%, transparent 70%),
+    var(--bg);
+  text-align:center;
+}
+.hero h1{font-size:2.1rem;font-weight:700;letter-spacing:-.5px;margin-bottom:8px}
+.hero h1 span{
+  background:linear-gradient(135deg,#a5b4fc,#6366f1,#818cf8);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.hero p{color:var(--text-d);font-size:1rem;margin-bottom:28px}
+.search-wrap{
+  max-width:660px;margin:0 auto 18px;
+  display:flex;gap:10px;
+}
+.search-input{
+  flex:1;background:var(--surface-2);border:1.5px solid var(--border-hi);
+  color:var(--text);border-radius:var(--r-lg);padding:14px 20px;font-size:1rem;
+  outline:none;transition:border-color var(--tr),box-shadow var(--tr);
+}
+.search-input:focus{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-glow)}
+.search-input::placeholder{color:var(--text-m)}
+.btn{
+  background:var(--primary);color:#fff;border:none;border-radius:var(--r-lg);
+  padding:14px 26px;font-size:.95rem;font-weight:600;transition:background var(--tr),transform var(--tr);
+  white-space:nowrap;
+}
+.btn:hover{background:var(--primary-d);transform:translateY(-1px)}
+.btn:active{transform:translateY(0)}
+.btn:disabled{background:var(--surface-3);color:var(--text-m);transform:none;cursor:not-allowed}
+.btn-sm{padding:7px 14px;font-size:.82rem;border-radius:8px}
+.btn-ghost{background:var(--surface-2);color:var(--text-d)}
+.btn-ghost:hover{background:var(--surface-3);color:var(--text)}
+
+.chips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-bottom:20px}
+.chip{
+  background:var(--surface-2);border:1px solid var(--border-hi);color:var(--text-d);
+  border-radius:20px;padding:5px 14px;font-size:.82rem;cursor:pointer;
+  transition:background var(--tr),color var(--tr),border-color var(--tr);
+}
+.chip:hover{background:var(--primary-glow);color:var(--primary);border-color:var(--primary)}
+
+.options-row{
+  display:flex;flex-wrap:wrap;gap:16px;justify-content:center;
+  max-width:660px;margin:0 auto;font-size:.85rem;color:var(--text-d);
+}
+.opt-group{display:flex;align-items:center;gap:8px}
+.opt-group label{color:var(--text-d);cursor:pointer}
+.toggle-check{accent-color:var(--primary);width:15px;height:15px;cursor:pointer}
+select{
+  background:var(--surface-2);border:1px solid var(--border-hi);color:var(--text);
+  border-radius:7px;padding:4px 8px;font-size:.84rem;outline:none;cursor:pointer;
+}
+
+/* ── Loading skeleton ─────────────────────────────────────────────────────── */
+.skeleton{
+  background:linear-gradient(90deg, var(--surface-2) 25%, var(--surface-3) 50%, var(--surface-2) 75%);
+  background-size:200% 100%;
+  animation:shimmer 1.4s infinite;border-radius:var(--r);
+}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.skel-card{height:120px;margin-bottom:12px}
+.skel-hero{height:90px;margin-bottom:20px}
+
+/* ── Main results layout ──────────────────────────────────────────────────── */
+#results{max-width:1280px;margin:0 auto;padding:0 24px 40px}
+
+/* ── Query target card ────────────────────────────────────────────────────── */
+.target-card{
+  background:linear-gradient(135deg, rgba(245,158,11,.06) 0%, var(--surface-2) 100%);
+  border:1px solid rgba(245,158,11,.3);border-radius:var(--r-xl);
+  padding:22px 26px;margin-bottom:24px;
+  display:flex;align-items:flex-start;gap:18px;
+  box-shadow:0 2px 20px rgba(245,158,11,.08);
+}
+.target-icon{font-size:2rem;line-height:1;flex-shrink:0;margin-top:2px}
+.target-body{flex:1;min-width:0}
+.target-label{
+  font-size:.72rem;font-weight:600;letter-spacing:.08em;
+  color:var(--gold);text-transform:uppercase;margin-bottom:5px;
+}
+.target-title{font-size:1.18rem;font-weight:600;color:var(--text);margin-bottom:6px;line-height:1.4}
+.target-meta{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.badge{
+  display:inline-flex;align-items:center;gap:4px;
+  padding:3px 10px;border-radius:20px;font-size:.76rem;font-weight:500;
+  white-space:nowrap;
+}
+.badge-year{background:var(--surface-3);color:var(--text-d)}
+.badge-canonical{background:rgba(245,158,11,.15);color:var(--gold);border:1px solid rgba(245,158,11,.3)}
+.badge-semantic{background:rgba(99,102,241,.15);color:var(--primary);border:1px solid rgba(99,102,241,.3)}
+.badge-topic{background:rgba(20,184,166,.15);color:var(--teal);border:1px solid rgba(20,184,166,.3)}
+.badge-lineage{background:rgba(16,185,129,.15);color:var(--green);border:1px solid rgba(16,185,129,.3)}
+.badge-hop{background:var(--surface-3);color:var(--text-d)}
+.sim-text{color:var(--text-d);font-size:.8rem;font-family:var(--mono)}
+
+/* ── Two-column layout ────────────────────────────────────────────────────── */
+.results-grid{display:grid;grid-template-columns:1fr 360px;gap:24px;align-items:start}
+@media(max-width:900px){.results-grid{grid-template-columns:1fr}}
+
+/* ── Section title ────────────────────────────────────────────────────────── */
+.section-hdr{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:14px;
+}
+.section-title{font-size:.8rem;font-weight:600;letter-spacing:.08em;color:var(--text-d);text-transform:uppercase}
+.result-count{font-size:.8rem;color:var(--text-m);font-family:var(--mono)}
+
+/* ── Prerequisite cards ──────────────────────────────────────────────────── */
+.prereq-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);
+  padding:18px 20px;margin-bottom:10px;
+  transition:border-color var(--tr),box-shadow var(--tr);cursor:pointer;
+}
+.prereq-card:hover{border-color:var(--border-hi);box-shadow:var(--sh)}
+.prereq-card.is-canonical{border-color:rgba(245,158,11,.35)}
+.prereq-card.is-lineage{border-color:rgba(16,185,129,.25)}
+.card-top{display:flex;align-items:flex-start;gap:12px;margin-bottom:12px}
+.rank-num{
+  width:28px;height:28px;border-radius:8px;background:var(--surface-3);
+  font-size:.8rem;font-weight:600;color:var(--text-d);
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.rank-num.is-canonical{background:rgba(245,158,11,.2);color:var(--gold)}
+.card-title{font-size:.95rem;font-weight:500;color:var(--text);line-height:1.45;flex:1}
+.card-score-pill{
+  background:var(--surface-3);border-radius:20px;
+  padding:3px 10px;font-size:.82rem;font-weight:600;
+  font-family:var(--mono);color:var(--primary);flex-shrink:0;
+}
+.card-meta{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.card-abstract{
+  font-size:.8rem;color:var(--text-d);line-height:1.5;
+  display:none;margin-bottom:12px;
+  border-left:2px solid var(--border-hi);padding-left:10px;
+}
+.prereq-card.expanded .card-abstract{display:block}
+
+/* ── Signal bars ──────────────────────────────────────────────────────────── */
+.signals-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px 16px}
+.sig-row{display:flex;align-items:center;gap:7px;font-size:.74rem}
+.sig-name{width:70px;color:var(--text-m);white-space:nowrap;flex-shrink:0}
+.sig-track{flex:1;height:5px;background:var(--surface-3);border-radius:3px;overflow:hidden}
+.sig-fill{height:100%;border-radius:3px;transition:width .4s ease}
+.sig-val{width:30px;text-align:right;color:var(--text-d);font-family:var(--mono);flex-shrink:0}
+
+/* Signal colors */
+.sig-semantic   .sig-fill{background:#6366f1}
+.sig-topic      .sig-fill{background:#14b8a6}
+.sig-year       .sig-fill{background:#f59e0b}
+.sig-canonical  .sig-fill{background:#fbbf24}
+.sig-lineage    .sig-fill{background:#10b981}
+.sig-paper_type .sig-fill{background:#a855f7}
+.sig-graph      .sig-fill{background:#64748b}
+
+/* ── Curriculum panel ─────────────────────────────────────────────────────── */
+.curriculum-panel{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r-xl);padding:20px;
+  position:sticky;top:76px;
+}
+.stage-flow{display:flex;flex-direction:column;gap:0}
+.stage-item{position:relative}
+.stage-card{
+  background:var(--surface-2);border:1px solid var(--border);
+  border-radius:var(--r-lg);padding:14px 16px;margin-bottom:4px;
+}
+.stage-label{
+  font-size:.7rem;font-weight:600;letter-spacing:.07em;
+  text-transform:uppercase;color:var(--primary);margin-bottom:8px;
+}
+.stage-paper{
+  display:flex;align-items:flex-start;gap:7px;
+  padding:5px 0;border-bottom:1px solid var(--border);
+  font-size:.8rem;line-height:1.4;
+}
+.stage-paper:last-child{border-bottom:none;padding-bottom:0}
+.stage-paper-title{color:var(--text-d);flex:1}
+.stage-paper-title.is-canonical{color:var(--gold-l);font-weight:500}
+.stage-paper-title.is-lineage{color:rgba(52,211,153,.9)}
+.stage-arrow{
+  display:flex;align-items:center;justify-content:center;
+  height:22px;color:var(--text-m);font-size:.85rem;
+}
+.stage-yr-chip{
+  font-size:.68rem;font-family:var(--mono);color:var(--text-m);
+  background:var(--surface-3);border-radius:4px;padding:1px 5px;flex-shrink:0;
+}
+
+/* ── Timing bar ───────────────────────────────────────────────────────────── */
+.timing-wrap{
+  background:var(--surface-2);border:1px solid var(--border);
+  border-radius:var(--r-lg);padding:16px 20px;margin-top:16px;
+}
+.timing-title{font-size:.76rem;font-weight:600;letter-spacing:.06em;color:var(--text-m);text-transform:uppercase;margin-bottom:12px}
+.timing-bar-outer{height:18px;border-radius:9px;background:var(--surface-3);overflow:hidden;display:flex;margin-bottom:6px}
+.timing-seg{height:100%;transition:width .5s ease}
+.timing-legend{display:flex;flex-wrap:wrap;gap:8px;font-size:.74rem;color:var(--text-d)}
+.legend-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:3px}
+
+
+/* ── Misc ─────────────────────────────────────────────────────────────────── */
+.empty-state{text-align:center;padding:60px 20px;color:var(--text-m)}
+.empty-state svg{width:48px;height:48px;opacity:.3;margin-bottom:12px}
+.error-banner{
+  background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);
+  border-radius:var(--r-lg);padding:14px 18px;color:var(--red);font-size:.9rem;
+  margin-bottom:18px;
+}
+.toast{
+  position:fixed;bottom:24px;right:24px;z-index:999;
+  background:var(--surface-2);border:1px solid var(--border-hi);
+  border-radius:var(--r-lg);padding:12px 18px;font-size:.88rem;color:var(--text);
+  box-shadow:var(--sh);transform:translateY(80px);opacity:0;
+  transition:transform .3s ease,opacity .3s ease;pointer-events:none;
+}
+.toast.show{transform:translateY(0);opacity:1}
+.divider{height:1px;background:var(--border);margin:16px 0}
+.copy-btn{
+  background:var(--surface-3);border:none;color:var(--text-d);
+  border-radius:7px;padding:5px 12px;font-size:.8rem;transition:var(--tr);
+}
+.copy-btn:hover{background:var(--surface-2);color:var(--text)}
+</style>
+</head>
+<body>
+
+<!-- ── Header ─────────────────────────────────────────────────────────────── -->
+<header>
+  <div class="logo">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <circle cx="12" cy="5" r="2"/><circle cx="5" cy="19" r="2"/><circle cx="19" cy="19" r="2"/>
+      <line x1="12" y1="7" x2="5" y2="17"/><line x1="12" y1="7" x2="19" y2="17"/>
+      <line x1="5" y1="19" x2="19" y2="19"/>
+    </svg>
+    <span>Prereq<em>Graph</em></span>
+  </div>
+  <span class="status-dot" id="statusDot" title="Server status"></span>
+  <nav>
+    <button class="nav-btn active" onclick="switchTab('search')">Search</button>
+  </nav>
+</header>
+
+<!-- ── Search tab ─────────────────────────────────────────────────────────── -->
+<div class="tab-content active" id="tab-search">
+  <div class="hero">
+    <h1>Discover <span>Learning Prerequisites</span></h1>
+    <p>Enter any ML paper, model, or concept — get a ranked prerequisite curriculum in seconds.</p>
+    <div class="search-wrap">
+      <input class="search-input" id="queryInput" type="text"
+             placeholder='e.g. "gan", "transformer", "bert", "graph neural network"'
+             autocomplete="off" autocorrect="off" spellcheck="false"/>
+      <button class="btn" id="searchBtn" onclick="doSearch()">Search</button>
+    </div>
+    <div class="chips" id="exampleChips"></div>
+    <div class="options-row">
+      <label class="opt-group">
+        <input type="checkbox" class="toggle-check" id="optCutoff"/>
+        Pre-2019 focus
+      </label>
+      <label class="opt-group">
+        Top-K
+        <select id="optTopK">
+          <option value="10">10</option>
+          <option value="15">15</option>
+          <option value="20">20</option>
+        </select>
+      </label>
+      <label class="opt-group">
+        <input type="checkbox" class="toggle-check" id="optSignals" checked/>
+        Show signal bars
+      </label>
+    </div>
+  </div>
+
+  <div id="results"></div>
+</div>
+
+
+<!-- ── Toast ──────────────────────────────────────────────────────────────── -->
+<div class="toast" id="toast"></div>
+
+<script>
+/* ══════════════════════════════════════════════════════════════════════════ */
+/* State                                                                       */
+/* ══════════════════════════════════════════════════════════════════════════ */
+const EXAMPLES = [
+  {label:'GAN', q:'gan'},
+  {label:'Transformer', q:'attention transformer'},
+  {label:'BERT', q:'bert'},
+  {label:'VAE', q:'variational autoencoder'},
+  {label:'ResNet', q:'resnet'},
+  {label:'LSTM', q:'lstm'},
+  {label:'Word2Vec', q:'word2vec'},
+  {label:'Graph Neural Network', q:'graph neural network'},
+  {label:'Diffusion', q:'diffusion model'},
+  {label:'Contrastive Learning', q:'contrastive learning'},
+];
+
+let currentResults = null;
+
+/* ══════════════════════════════════════════════════════════════════════════ */
+/* Tab routing                                                                 */
+/* ══════════════════════════════════════════════════════════════════════════ */
+function switchTab(tab) {
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+  document.getElementById(`tab-${tab}`).classList.add('active');
+  document.querySelector(`.nav-btn[onclick*="${tab}"]`).classList.add('active');
+}
+
+/* ══════════════════════════════════════════════════════════════════════════ */
+/* Server health polling                                                       */
+/* ══════════════════════════════════════════════════════════════════════════ */
+async function pollHealth() {
+  try {
+    const r = await fetch('/api/health');
+    const d = await r.json();
+    const dot = document.getElementById('statusDot');
+    dot.className = 'status-dot ' + d.status;
+    dot.title = d.message || d.status;
+  } catch { }
+}
+setInterval(pollHealth, 5000);
+pollHealth();
+
+/* ══════════════════════════════════════════════════════════════════════════ */
+/* Example chips                                                               */
+/* ══════════════════════════════════════════════════════════════════════════ */
+(function buildChips() {
+  const wrap = document.getElementById('exampleChips');
+  EXAMPLES.forEach(e => {
+    const el = document.createElement('button');
+    el.className = 'chip';
+    el.textContent = e.label;
+    el.onclick = () => {
+      document.getElementById('queryInput').value = e.q;
+      doSearch();
+    };
+    wrap.appendChild(el);
+  });
+})();
+
+/* ══════════════════════════════════════════════════════════════════════════ */
+/* Search                                                                      */
+/* ══════════════════════════════════════════════════════════════════════════ */
+document.getElementById('queryInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') doSearch();
+});
+document.addEventListener('keydown', e => {
+  if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+    e.preventDefault();
+    document.getElementById('queryInput').focus();
+    switchTab('search');
+  }
+});
+
+async function doSearch() {
+  const query = document.getElementById('queryInput').value.trim();
+  if (!query) return;
+  const yearCutoff  = document.getElementById('optCutoff').checked ? 2019 : null;
+  const topK        = parseInt(document.getElementById('optTopK').value);
+  const showSignals = document.getElementById('optSignals').checked;
+
+  setSearching(true);
+  const results = document.getElementById('results');
+  results.innerHTML = renderSkeleton();
+
+  try {
+    const resp = await fetch('/api/query', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({query, year_cutoff: yearCutoff, top_k: topK}),
+    });
+    const data = await resp.json();
+    if (!resp.ok || data.status === 'error') {
+      results.innerHTML = `<div class="error-banner">⚠ ${data.error || data.detail || 'Query failed'}</div>`;
+      return;
+    }
+    currentResults = data;
+    renderResults(data, showSignals);
+  } catch(e) {
+    results.innerHTML = `<div class="error-banner">⚠ Network error: ${e.message}</div>`;
+  } finally {
+    setSearching(false);
+  }
+}
+
+function setSearching(on) {
+  const btn = document.getElementById('searchBtn');
+  btn.disabled = on;
+  btn.textContent = on ? 'Searching…' : 'Search';
+}
+
+/* ══════════════════════════════════════════════════════════════════════════ */
+/* Skeleton                                                                    */
+/* ══════════════════════════════════════════════════════════════════════════ */
+function renderSkeleton() {
+  return `
+  <div style="max-width:1280px;margin:0 auto;padding:20px 0">
+    <div class="skeleton skel-hero" style="border-radius:16px;max-width:100%;margin-bottom:22px"></div>
+    <div style="display:grid;grid-template-columns:1fr 360px;gap:24px">
+      <div>
+        ${Array(5).fill('<div class="skeleton skel-card"></div>').join('')}
+      </div>
+      <div class="skeleton" style="height:400px;border-radius:16px"></div>
+    </div>
+  </div>`;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════ */
+/* Main render                                                                 */
+/* ══════════════════════════════════════════════════════════════════════════ */
+function renderResults(data, showSignals) {
+  const wrap = document.getElementById('results');
+  const canon_set = new Set((data.intent?.canonical_frags||[]).map(f=>f.toLowerCase()));
+
+  const targetHTML = renderTarget(data);
+  const prereqHTML = renderPrereqs(data.prerequisites || [], showSignals);
+  const curricHTML = renderCurriculum(data.curriculum || []);
+  const timingHTML = renderTiming(data.timing || {}, data.bfs_stats || {});
+
+  const cacheTag = data._cached
+    ? `<span class="badge badge-topic" style="font-size:.7rem">⚡ cached</span>` : '';
+  const totalMs  = data.timing?.total_ms || 0;
+
+  wrap.innerHTML = `
+  <div style="max-width:1280px;margin:0 auto;padding:20px 0">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="font-size:.85rem;color:var(--text-d)">
+          Results for <strong style="color:var(--text)">"${esc(data.query)}"</strong>
+        </span>
+        ${cacheTag}
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="copy-btn" onclick="copyResults()">Copy JSON</button>
+        <span style="font-size:.78rem;color:var(--text-m);align-self:center">${totalMs}ms</span>
+      </div>
+    </div>
+    ${targetHTML}
+    <div class="results-grid">
+      <div>
+        <div class="section-hdr">
+          <span class="section-title">Prerequisites</span>
+          <span class="result-count">${data.prerequisites?.length||0} results</span>
+        </div>
+        ${prereqHTML}
+      </div>
+      <div>
+        <div class="section-hdr">
+          <span class="section-title">Curriculum</span>
+          <span class="result-count">${(data.curriculum||[]).length} stages</span>
+        </div>
+        ${curricHTML}
+        ${timingHTML}
+      </div>
+    </div>
+  </div>`;
+}
+
+/* ── Query target ─────────────────────────────────────────────────────────── */
+function renderTarget(data) {
+  const t = data.query_target;
+  if (!t) return '';
+  const isCanon  = t.match_type === 'canonical';
+  const icon     = isCanon ? '★' : '◎';
+  const labelTxt = isCanon ? 'Canonical Paper' : 'Closest Match';
+  const matchBadge = isCanon
+    ? `<span class="badge badge-canonical">★ Canonical</span>`
+    : `<span class="badge badge-semantic">◎ Semantic top-1</span>`;
+  const topic = data.intent?.label !== 'general'
+    ? `<span class="badge badge-topic">${data.intent.label}</span>` : '';
+  return `
+  <div class="target-card">
+    <div class="target-icon" title="${labelTxt}">${icon}</div>
+    <div class="target-body">
+      <div class="target-label">${labelTxt}</div>
+      <div class="target-title">${esc(t.title)}</div>
+      <div class="target-meta">
+        ${t.year ? `<span class="badge badge-year">${t.year}</span>` : ''}
+        ${matchBadge}
+        ${topic}
+        <span class="sim-text">sim = ${t.semantic_sim?.toFixed(3)||'?'}</span>
+        ${data.bfs_stats?.lineage_nodes ? `<span class="badge badge-lineage">→ ${data.bfs_stats.lineage_nodes} lineage</span>` : ''}
+      </div>
+    </div>
+  </div>`;
+}
+
+/* ── Prerequisite cards ────────────────────────────────────────────────────── */
+const SIG_CONFIG = [
+  {key:'semantic',    label:'Semantic',  color:'#6366f1'},
+  {key:'topic_match', label:'Topic',     color:'#14b8a6'},
+  {key:'year_score',  label:'Year',      color:'#f59e0b'},
+  {key:'canonical',   label:'Canon',     color:'#fbbf24'},
+  {key:'lineage',     label:'Lineage',   color:'#10b981'},
+  {key:'paper_type',  label:'Type',      color:'#a855f7'},
+];
+
+function renderPrereqs(items, showSignals) {
+  if (!items.length) return `<div class="empty-state"><p>No prerequisites found.</p></div>`;
+  return items.map((p, i) => {
+    const canonCls  = p.is_canonical ? ' is-canonical' : '';
+    const lineageCls= p.is_lineage   ? ' is-lineage'   : '';
+    const rankCls   = p.is_canonical ? ' is-canonical' : '';
+    const badges = [
+      p.year   ? `<span class="badge badge-year">${p.year}</span>` : '',
+      p.is_canonical ? `<span class="badge badge-canonical">★ Canonical</span>` : '',
+      p.is_lineage   ? `<span class="badge badge-lineage">→ Lineage</span>`   : '',
+      `<span class="badge badge-hop">Hop ${p.hop}</span>`,
+    ].join('');
+
+    const signalHTML = showSignals ? `
+      <div class="signals-grid">
+        ${SIG_CONFIG.map(s => {
+          const v = s.key === 'year_score' ? p.signals?.year_score : p.signals?.[s.key];
+          const pct = Math.round((v||0)*100);
+          return `<div class="sig-row sig-${s.key}">
+            <span class="sig-name">${s.label}</span>
+            <div class="sig-track"><div class="sig-fill" style="width:${pct}%;background:${s.color}"></div></div>
+            <span class="sig-val">${(v||0).toFixed(2)}</span>
+          </div>`;
+        }).join('')}
+      </div>` : '';
+
+    const abstractHTML = p.abstract
+      ? `<div class="card-abstract">${esc(p.abstract)}${p.abstract.length>=220?'…':''}</div>` : '';
+
+    return `
+    <div class="prereq-card${canonCls}${lineageCls}" onclick="toggleCard(this)" data-idx="${i}">
+      <div class="card-top">
+        <div class="rank-num${rankCls}">${p.rank}</div>
+        <div class="card-title">${esc(p.title)}</div>
+        <div class="card-score-pill">${p.score.toFixed(3)}</div>
+      </div>
+      <div class="card-meta">${badges}</div>
+      ${abstractHTML}
+      ${signalHTML}
+    </div>`;
+  }).join('');
+}
+
+function toggleCard(el) {
+  el.classList.toggle('expanded');
+}
+
+/* ── Curriculum ─────────────────────────────────────────────────────────────── */
+function renderCurriculum(stages) {
+  if (!stages.length) return `<div class="empty-state" style="padding:20px"><p>No curriculum built.</p></div>`;
+  const stageColors = ['#6366f1','#14b8a6','#f59e0b','#a855f7'];
+  const html = stages.map((s, idx) => {
+    const papers = s.papers.map(p => {
+      const cls = p.is_canonical ? ' is-canonical' : (p.is_lineage ? ' is-lineage' : '');
+      const mark = p.is_canonical ? '★ ' : (p.is_lineage ? '→ ' : '');
+      return `<div class="stage-paper">
+        <span class="stage-yr-chip">${p.year||'?'}</span>
+        <span class="stage-paper-title${cls}">${mark}${esc(p.title)}</span>
+      </div>`;
+    }).join('');
+    const arrow = idx < stages.length-1
+      ? `<div class="stage-arrow" style="color:${stageColors[idx%4]}">↓</div>` : '';
+    return `
+    <div class="stage-item">
+      <div class="stage-card">
+        <div class="stage-label" style="color:${stageColors[idx%4]}">Stage ${s.stage}</div>
+        ${papers}
+      </div>
+      ${arrow}
+    </div>`;
+  }).join('');
+  return `<div class="curriculum-panel"><div class="stage-flow">${html}</div></div>`;
+}
+
+/* ── Timing bar ──────────────────────────────────────────────────────────────── */
+function renderTiming(t, bfs) {
+  if (!t.total_ms) return '';
+  const segs = [
+    {key:'retrieval_ms', label:'Retrieval', color:'#6366f1'},
+    {key:'canon_ms',     label:'Canon',     color:'#f59e0b'},
+    {key:'bfs_ms',       label:'BFS',       color:'#14b8a6'},
+    {key:'scoring_ms',   label:'Scoring',   color:'#a855f7'},
+    {key:'curriculum_ms',label:'Curriculum',color:'#10b981'},
+  ];
+  const total = t.total_ms || 1;
+  const bars  = segs.map(s => `<div class="timing-seg" style="width:${(t[s.key]||0)/total*100}%;background:${s.color}" title="${s.label}: ${t[s.key]||0}ms"></div>`).join('');
+  const legend= segs.map(s => `<span><span class="legend-dot" style="background:${s.color}"></span>${s.label} ${t[s.key]||0}ms</span>`).join('');
+  return `
+  <div class="timing-wrap">
+    <div class="timing-title">Pipeline timing — ${total}ms total</div>
+    <div class="timing-bar-outer">${bars}</div>
+    <div class="timing-legend">${legend}</div>
+    ${bfs.candidates ? `<div style="font-size:.76rem;color:var(--text-m);margin-top:8px">BFS: ${bfs.nodes_visited} visited · ${bfs.candidates} candidates · ${bfs.lineage_nodes} lineage</div>` : ''}
+  </div>`;
+}
+
+/* ── Copy ────────────────────────────────────────────────────────────────────── */
+function copyResults() {
+  if (!currentResults) return;
+  navigator.clipboard.writeText(JSON.stringify(currentResults, null, 2))
+    .then(() => showToast('Copied JSON to clipboard'));
+}
+
+
+/* ══════════════════════════════════════════════════════════════════════════ */
+/* Toast                                                                       */
+/* ══════════════════════════════════════════════════════════════════════════ */
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════ */
+/* Utils                                                                       */
+/* ══════════════════════════════════════════════════════════════════════════ */
+function esc(str) {
+  return String(str||'')
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;');
+}
+
+</script>
+</body>
+</html>

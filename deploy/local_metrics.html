@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>PreReqGraph — Local Metrics</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+<style>
+:root {
+  --bg:           #080c18;
+  --surface:      #0f1623;
+  --surface-2:    #161d2e;
+  --surface-3:    #1e2640;
+  --border:       #252e45;
+  --border-hi:    #313d5a;
+  --primary:      #6366f1;
+  --primary-d:    #4f46e5;
+  --primary-glow: rgba(99,102,241,.18);
+  --gold:         #f59e0b;
+  --gold-l:       #fde68a;
+  --teal:         #14b8a6;
+  --green:        #10b981;
+  --red:          #ef4444;
+  --amber:        #f97316;
+  --violet:       #a855f7;
+  --text:         #e2e8f8;
+  --text-d:       #94a3b8;
+  --text-m:       #64748b;
+  --mono:         'JetBrains Mono', monospace;
+  --sans:         'Inter', system-ui, sans-serif;
+  --r:            10px;
+  --r-lg:         16px;
+  --r-xl:         22px;
+  --sh:           0 4px 32px rgba(0,0,0,.45);
+  --tr:           .18s ease;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:100vh;line-height:1.6}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:var(--surface)}
+::-webkit-scrollbar-thumb{background:var(--border-hi);border-radius:3px}
+
+header{
+  position:sticky;top:0;z-index:100;
+  background:rgba(8,12,24,.88);
+  backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--border);
+  padding:0 24px;
+  display:flex;align-items:center;gap:20px;height:60px;
+}
+.logo{display:flex;align-items:center;gap:10px;font-weight:700;font-size:1.1rem;color:var(--text)}
+.logo svg{color:var(--primary)}
+.logo span em{color:var(--primary);font-style:normal}
+.local-badge{
+  background:rgba(245,158,11,.15);border:1px solid rgba(245,158,11,.35);
+  color:var(--gold);border-radius:20px;padding:3px 10px;font-size:.75rem;font-weight:600;
+}
+.server-url{
+  margin-left:auto;display:flex;align-items:center;gap:8px;font-size:.85rem;color:var(--text-d);
+}
+.server-url input{
+  background:var(--surface-2);border:1px solid var(--border-hi);color:var(--text);
+  border-radius:7px;padding:4px 10px;font-size:.83rem;outline:none;width:200px;
+  font-family:var(--mono);
+}
+.server-url input:focus{border-color:var(--primary)}
+.status-dot{
+  width:8px;height:8px;border-radius:50%;background:var(--text-m);flex-shrink:0;
+}
+.status-dot.ready{background:var(--green)}
+.status-dot.error{background:var(--red)}
+
+#metrics-wrap{max-width:1280px;margin:0 auto;padding:28px 24px}
+.page-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.page-hdr h2{font-size:1.1rem;font-weight:600;color:var(--text)}
+.refresh-btn{
+  background:var(--surface-2);border:1px solid var(--border);
+  color:var(--text-d);border-radius:7px;padding:5px 12px;font-size:.8rem;
+  transition:var(--tr);cursor:pointer;
+}
+.refresh-btn:hover{background:var(--surface-3);color:var(--text)}
+
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px;margin-bottom:24px}
+.kpi-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:18px 20px}
+.kpi-label{font-size:.73rem;font-weight:600;letter-spacing:.07em;color:var(--text-m);text-transform:uppercase;margin-bottom:4px}
+.kpi-val{font-size:1.9rem;font-weight:700;font-family:var(--mono);color:var(--text);line-height:1.2}
+.kpi-sub{font-size:.78rem;color:var(--text-m);margin-top:2px}
+.kpi-card.kpi-primary{border-color:rgba(99,102,241,.35);background:linear-gradient(135deg,rgba(99,102,241,.08),var(--surface))}
+.kpi-card.kpi-gold{border-color:rgba(245,158,11,.35);background:linear-gradient(135deg,rgba(245,158,11,.08),var(--surface))}
+.kpi-card.kpi-green{border-color:rgba(16,185,129,.35);background:linear-gradient(135deg,rgba(16,185,129,.08),var(--surface))}
+
+.charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:24px}
+@media(max-width:800px){.charts-grid{grid-template-columns:1fr}}
+.chart-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:18px 20px}
+.chart-title{font-size:.78rem;font-weight:600;letter-spacing:.07em;color:var(--text-d);text-transform:uppercase;margin-bottom:14px}
+.chart-wrap{position:relative;height:210px}
+
+.sys-row{display:flex;gap:14px;margin-bottom:24px;flex-wrap:wrap}
+.sys-bar-card{
+  flex:1;min-width:180px;background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r-lg);padding:16px 18px;
+}
+.sys-bar-label{font-size:.76rem;color:var(--text-m);margin-bottom:8px}
+.sys-bar-track{height:8px;background:var(--surface-3);border-radius:4px;overflow:hidden}
+.sys-bar-fill{height:100%;border-radius:4px;transition:width .6s ease}
+.sys-bar-val{font-size:.85rem;font-family:var(--mono);color:var(--text);margin-top:5px}
+
+.table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden}
+table{width:100%;border-collapse:collapse;font-size:.83rem}
+thead{background:var(--surface-2)}
+th{padding:10px 14px;text-align:left;font-size:.72rem;font-weight:600;letter-spacing:.06em;color:var(--text-m);text-transform:uppercase;border-bottom:1px solid var(--border)}
+td{padding:10px 14px;border-bottom:1px solid var(--border);color:var(--text-d)}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--surface-2)}
+.td-query{max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text)}
+.td-ms{font-family:var(--mono);color:var(--primary)}
+.tag{display:inline-block;padding:2px 7px;border-radius:4px;font-size:.7rem;font-weight:500}
+.tag-ok{background:rgba(16,185,129,.15);color:var(--green)}
+.tag-err{background:rgba(239,68,68,.15);color:var(--red)}
+.tag-can{background:rgba(245,158,11,.15);color:var(--gold)}
+.badge-topic{background:rgba(20,184,166,.15);color:var(--teal);border:1px solid rgba(20,184,166,.3);padding:2px 8px;border-radius:20px;font-size:.72rem;font-weight:500}
+
+.error-msg{
+  background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);
+  border-radius:var(--r-lg);padding:14px 18px;color:var(--red);font-size:.9rem;margin-bottom:18px;
+}
+.empty-state{text-align:center;padding:40px;color:var(--text-m)}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <circle cx="12" cy="5" r="2"/><circle cx="5" cy="19" r="2"/><circle cx="19" cy="19" r="2"/>
+      <line x1="12" y1="7" x2="5" y2="17"/><line x1="12" y1="7" x2="19" y2="17"/>
+      <line x1="5" y1="19" x2="19" y2="19"/>
+    </svg>
+    <span>Prereq<em>Graph</em></span>
+  </div>
+  <span class="local-badge">Local Metrics</span>
+  <div class="server-url">
+    <span class="status-dot" id="statusDot"></span>
+    <span>Server:</span>
+    <input id="serverUrl" value="http://localhost:8000" onchange="loadMetrics()"/>
+  </div>
+</header>
+
+<div id="metrics-wrap">
+  <div class="page-hdr">
+    <h2>System Metrics</h2>
+    <button class="refresh-btn" onclick="loadMetrics()">↻ Refresh</button>
+  </div>
+  <div id="errorMsg"></div>
+  <div class="kpi-grid" id="kpiGrid">
+    <div class="kpi-card" style="height:90px;opacity:.4"></div>
+    <div class="kpi-card" style="height:90px;opacity:.4"></div>
+    <div class="kpi-card" style="height:90px;opacity:.4"></div>
+    <div class="kpi-card" style="height:90px;opacity:.4"></div>
+  </div>
+  <div class="sys-row" id="sysRow"></div>
+  <div class="charts-grid">
+    <div class="chart-card">
+      <div class="chart-title">Query Latency Trend (last 20)</div>
+      <div class="chart-wrap"><canvas id="latencyChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Stage Time Breakdown (last 20)</div>
+      <div class="chart-wrap"><canvas id="stageChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Topic Distribution</div>
+      <div class="chart-wrap"><canvas id="topicChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">System Resources (last 2.5 min)</div>
+      <div class="chart-wrap"><canvas id="sysChart"></canvas></div>
+    </div>
+  </div>
+  <div style="margin-bottom:10px;display:flex;align-items:center;justify-content:space-between">
+    <span style="font-size:.78rem;font-weight:600;letter-spacing:.07em;color:var(--text-d);text-transform:uppercase">Recent Queries</span>
+  </div>
+  <div class="table-wrap" id="recentTable">
+    <div class="empty-state">Loading…</div>
+  </div>
+</div>
+
+<script>
+let charts = {};
+let autoInterval = null;
+
+function serverBase() {
+  return document.getElementById('serverUrl').value.replace(/\/$/, '');
+}
+
+async function loadMetrics() {
+  const errEl = document.getElementById('errorMsg');
+  errEl.innerHTML = '';
+  try {
+    const resp = await fetch(serverBase() + '/api/metrics');
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const d = await resp.json();
+    document.getElementById('statusDot').className = 'status-dot ready';
+    renderKPIs(d);
+    renderSysRow(d.system || {});
+    renderCharts(d);
+    renderRecentTable(d.recent_queries || []);
+  } catch(e) {
+    document.getElementById('statusDot').className = 'status-dot error';
+    errEl.innerHTML = `<div class="error-msg">Cannot reach server at <strong>${serverBase()}</strong> — ${e.message}. Make sure the server is running locally.</div>`;
+  }
+}
+
+function renderKPIs(d) {
+  const lat = d.latency || {};
+  document.getElementById('kpiGrid').innerHTML = `
+    <div class="kpi-card kpi-primary">
+      <div class="kpi-label">Total Queries</div>
+      <div class="kpi-val">${d.total_queries||0}</div>
+      <div class="kpi-sub">${(d.qpm||0).toFixed(1)} q/min</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">p50 Latency</div>
+      <div class="kpi-val">${(lat.p50_ms||0) < 1000 ? (lat.p50_ms||0)+'ms' : ((lat.p50_ms||0)/1000).toFixed(1)+'s'}</div>
+      <div class="kpi-sub">p90 ${lat.p90_ms||0}ms · p99 ${lat.p99_ms||0}ms</div>
+    </div>
+    <div class="kpi-card kpi-gold">
+      <div class="kpi-label">Canon Match</div>
+      <div class="kpi-val">${Math.round((d.canonical_match_rate||0)*100)}%</div>
+      <div class="kpi-sub">of successful queries</div>
+    </div>
+    <div class="kpi-card kpi-green">
+      <div class="kpi-label">Success Rate</div>
+      <div class="kpi-val">${Math.round((1-(d.error_rate||0))*100)}%</div>
+      <div class="kpi-sub">${d.successful_queries||0} / ${d.total_queries||0} ok</div>
+    </div>`;
+}
+
+function renderSysRow(sys) {
+  if (!Object.keys(sys).length) return;
+  const row = document.getElementById('sysRow');
+  const items = [
+    {label:'CPU Usage',   val:sys.cpu_percent,              unit:'%',  pct:true,  color:'#6366f1'},
+    {label:'RAM Usage',   val:sys.ram_percent,              unit:'%',  pct:true,  color:'#14b8a6'},
+    {label:'Process RAM', val:Math.round(sys.process_rss_mb),unit:' MB',pct:false, color:'#f59e0b'},
+  ];
+  row.innerHTML = items.map(it => `
+    <div class="sys-bar-card">
+      <div class="sys-bar-label">${it.label}</div>
+      <div class="sys-bar-track">
+        <div class="sys-bar-fill" style="width:${it.pct ? it.val : Math.min(100, it.val/8192*100)}%;background:${it.color}"></div>
+      </div>
+      <div class="sys-bar-val">${it.val}${it.unit}</div>
+    </div>`).join('');
+}
+
+const CHART_OPTS = {
+  responsive:true, maintainAspectRatio:false,
+  animation:{duration:400},
+  plugins:{legend:{display:false}},
+};
+const STAGE_COLORS = ['#6366f1','#f59e0b','#14b8a6','#a855f7','#10b981'];
+const STAGE_LABELS = ['Retrieval','Canon','BFS','Scoring','Curriculum'];
+
+function renderCharts(d) {
+  const trend = d.latency_trend || [];
+  updateLineChart('latencyChart', trend.map((_,i)=>`Q${i+1}`), trend.map(t=>t.total_ms), 'Latency (ms)', '#6366f1');
+
+  const segs = d.stage_breakdown || [];
+  updateStackedBar('stageChart', segs.map((_,i)=>`Q${i+1}`),
+    STAGE_LABELS.map((lbl,i)=>({
+      label:lbl,
+      data:segs.map(s=>[s.retrieval,s.canon,s.bfs,s.scoring,s.curriculum][i]||0),
+      backgroundColor:STAGE_COLORS[i], borderWidth:0, borderRadius:2,
+    }))
+  );
+
+  const topics = d.topic_distribution || {};
+  updateDoughnut('topicChart', Object.keys(topics), Object.values(topics));
+
+  const sys = d.system_trend || [];
+  updateDualLine('sysChart', sys.map(()=>''), sys.map(s=>s.cpu), sys.map(s=>s.ram));
+}
+
+function updateLineChart(id, labels, data, label, color) {
+  const ctx = document.getElementById(id);
+  if (!ctx) return;
+  if (charts[id]) charts[id].destroy();
+  charts[id] = new Chart(ctx, {
+    type:'line',
+    data:{labels, datasets:[{label, data, borderColor:color, backgroundColor:color+'28',
+          tension:.35, fill:true, pointRadius:3}]},
+    options:{...CHART_OPTS,
+      scales:{
+        x:{ticks:{color:'#64748b',font:{size:10}},grid:{color:'#1e2640'}},
+        y:{ticks:{color:'#64748b',font:{size:10}},grid:{color:'#1e2640'}},
+      }
+    }
+  });
+}
+
+function updateStackedBar(id, labels, datasets) {
+  const ctx = document.getElementById(id);
+  if (!ctx) return;
+  if (charts[id]) charts[id].destroy();
+  charts[id] = new Chart(ctx, {
+    type:'bar', data:{labels, datasets},
+    options:{...CHART_OPTS,
+      plugins:{legend:{display:true, labels:{color:'#94a3b8',font:{size:10},boxWidth:10}}},
+      scales:{
+        x:{stacked:true, ticks:{color:'#64748b',font:{size:10}}, grid:{color:'#1e2640'}},
+        y:{stacked:true, ticks:{color:'#64748b',font:{size:10}}, grid:{color:'#1e2640'}},
+      }
+    }
+  });
+}
+
+function updateDoughnut(id, labels, data) {
+  const ctx = document.getElementById(id);
+  if (!ctx) return;
+  if (charts[id]) charts[id].destroy();
+  const palette = ['#6366f1','#14b8a6','#f59e0b','#a855f7','#10b981','#ef4444','#64748b'];
+  charts[id] = new Chart(ctx, {
+    type:'doughnut',
+    data:{labels, datasets:[{data, backgroundColor:labels.map((_,i)=>palette[i%palette.length]),
+          borderWidth:2, borderColor:'#0f1623'}]},
+    options:{...CHART_OPTS,
+      plugins:{legend:{display:true, position:'right', labels:{color:'#94a3b8',font:{size:10},boxWidth:10,padding:8}}},
+      cutout:'65%',
+    }
+  });
+}
+
+function updateDualLine(id, labels, cpu, ram) {
+  const ctx = document.getElementById(id);
+  if (!ctx) return;
+  if (charts[id]) charts[id].destroy();
+  charts[id] = new Chart(ctx, {
+    type:'line',
+    data:{labels, datasets:[
+      {label:'CPU %', data:cpu, borderColor:'#6366f1', backgroundColor:'#6366f128', tension:.4, fill:true, pointRadius:0},
+      {label:'RAM %', data:ram, borderColor:'#14b8a6', backgroundColor:'#14b8a628', tension:.4, fill:true, pointRadius:0},
+    ]},
+    options:{...CHART_OPTS,
+      plugins:{legend:{display:true, labels:{color:'#94a3b8',font:{size:10},boxWidth:10}}},
+      scales:{
+        x:{ticks:{display:false}, grid:{color:'#1e2640'}},
+        y:{min:0, max:100, ticks:{color:'#64748b',font:{size:10}}, grid:{color:'#1e2640'}},
+      }
+    }
+  });
+}
+
+function renderRecentTable(rows) {
+  const wrap = document.getElementById('recentTable');
+  if (!rows.length) {
+    wrap.innerHTML = '<div class="empty-state">No queries yet.</div>';
+    return;
+  }
+  const trs = rows.map(r => {
+    const dt = new Date(r.ts*1000).toLocaleTimeString();
+    const ok = !r.error;
+    return `<tr>
+      <td class="td-query" title="${esc(r.query)}">${esc(r.query)}</td>
+      <td><span class="badge-topic">${r.topic||'general'}</span></td>
+      <td class="td-ms">${r.total_ms}ms</td>
+      <td>${r.canonical_matched ? '<span class="tag tag-can">★</span>' : '—'}</td>
+      <td>${r.prerequisites||0}</td>
+      <td>${r.stages||0}</td>
+      <td><span class="tag ${ok?'tag-ok':'tag-err'}">${ok?'ok':'err'}</span></td>
+      <td style="color:var(--text-m);font-size:.78rem">${dt}</td>
+    </tr>`;
+  }).join('');
+  wrap.innerHTML = `<table>
+    <thead><tr>
+      <th>Query</th><th>Topic</th><th>Latency</th><th>Canon</th>
+      <th>Results</th><th>Stages</th><th>Status</th><th>Time</th>
+    </tr></thead>
+    <tbody>${trs}</tbody>
+  </table>`;
+}
+
+function esc(str) {
+  return String(str||'')
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// Auto-refresh every 12 s while the page is open
+loadMetrics();
+autoInterval = setInterval(loadMetrics, 12000);
+</script>
+</body>
+</html>
